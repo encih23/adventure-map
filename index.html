@@ -1,0 +1,676 @@
+﻿<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>大冒險地圖</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: #f8fbff;
+      --muted: #aeb8ce;
+      --gold: #ffd166;
+      --green: #4ade80;
+      --red: #fb4b5f;
+      --blue: #38bdf8;
+      --line: rgba(255,255,255,.14);
+      --shadow: 0 28px 90px rgba(0,0,0,.48);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Microsoft JhengHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #070914;
+      overflow: hidden;
+    }
+
+    .cover {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      background: #05060b;
+      cursor: pointer;
+      transition: opacity .7s ease, visibility .7s ease;
+    }
+
+    .cover.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cover-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 34px;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: rgba(0,0,0,.42);
+      color: #fff;
+      font-weight: 900;
+      backdrop-filter: blur(8px);
+      animation: pulse 1.2s ease-in-out infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes pulse { 50% { opacity: .58; transform: translateX(-50%) scale(.98); } }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(56,189,248,.18), transparent 24rem),
+        radial-gradient(circle at 84% 15%, rgba(255,209,102,.14), transparent 26rem),
+        linear-gradient(145deg, #070914, #11172a 56%, #070914);
+    }
+
+    .info {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .held {
+      border: 1px solid rgba(255,209,102,.42);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(7, 9, 20, .72);
+      color: var(--gold);
+      font-weight: 1000;
+      box-shadow: 0 10px 28px rgba(0,0,0,.24);
+      backdrop-filter: blur(8px);
+    }
+
+    .clear-btn, .modal-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      color: var(--text);
+      background: rgba(7, 9, 20, .72);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 28px rgba(0,0,0,.24);
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .map-stage {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 62px 18px 18px;
+    }
+
+    .map-frame {
+      position: relative;
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: var(--map-ratio, 16 / 9);
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 24px 70px rgba(0,0,0,.48));
+    }
+
+    .map-img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(100vh - 80px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+
+    .hotspot-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .hotspot {
+      position: absolute;
+      border-radius: 16px;
+      cursor: pointer;
+      pointer-events: auto;
+      border: 2px solid transparent;
+      background: rgba(255,255,255,0);
+      transform: translate(-50%, -50%);
+      transition: box-shadow .18s ease, background .18s ease, border-color .18s ease;
+    }
+
+    .hotspot:hover {
+      border-color: rgba(255,255,255,.28);
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 0 28px rgba(255,255,255,.24), inset 0 0 28px rgba(255,255,255,.1);
+    }
+
+    .stamp {
+      position: absolute;
+      z-index: 2;
+      width: clamp(32px, 4.6vw, 54px);
+      height: clamp(32px, 4.6vw, 54px);
+      display: none;
+      place-items: center;
+      border: 3px solid rgba(74,222,128,.9);
+      border-radius: 50%;
+      background: rgba(8, 35, 18, .78);
+      color: var(--green);
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 1000;
+      box-shadow: 0 0 22px rgba(74,222,128,.46);
+      transform: translate(-50%, -50%) rotate(-10deg);
+      pointer-events: none;
+    }
+
+    .stamp.show { display: grid; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 6, 14, .78);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+
+    .modal.show { display: flex; }
+
+    .door-panel {
+      width: min(880px, 100%);
+      max-height: min(92vh, 760px);
+      overflow: auto;
+      border: 1px solid rgba(255,209,102,.45);
+      border-radius: 24px;
+      background: linear-gradient(180deg, #20263d, #101625);
+      padding: 22px;
+      box-shadow: 0 0 40px rgba(255,209,102,.16), var(--shadow);
+    }
+
+    .door-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .door-head h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.4rem); }
+    .close-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font: inherit;
+      font-weight: 900;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .slot {
+      min-height: 148px;
+      border: 2px dashed rgba(255,209,102,.46);
+      border-radius: 18px;
+      background: rgba(0,0,0,.2);
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      color: var(--muted);
+      font-weight: 900;
+      transition: background .16s ease, border-color .16s ease, transform .16s ease;
+    }
+
+    .slot.over { transform: translateY(-2px); border-color: var(--blue); background: rgba(56,189,248,.08); }
+    .slot.correct { border-style: solid; border-color: var(--green); background: rgba(74,222,128,.12); color: var(--green); }
+    .slot.wrong { animation: wrongFlash .28s ease; }
+
+    @keyframes wrongFlash {
+      40% { border-color: var(--red); box-shadow: 0 0 26px rgba(251,75,95,.55); transform: translateX(5px); }
+    }
+
+    .bag {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.055);
+      padding: 14px;
+      min-height: 126px;
+    }
+
+    .bag-title { color: var(--gold); font-weight: 1000; margin-bottom: 10px; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; align-items: center; }
+
+    .cert {
+      border: 1px solid rgba(255,209,102,.45);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(255,209,102,.2), rgba(56,189,248,.12));
+      color: var(--text);
+      font-weight: 1000;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .cert.dragging {
+      position: fixed;
+      z-index: 30;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    }
+
+    .cert.locked {
+      cursor: default;
+      background: linear-gradient(135deg, rgba(74,222,128,.28), rgba(74,222,128,.16));
+      border-color: var(--green);
+      color: #d9ffe5;
+    }
+
+    .cert.wrong { animation: certWrong .28s ease; }
+    @keyframes certWrong { 50% { box-shadow: 0 0 24px rgba(251,75,95,.72); transform: translateX(5px); } }
+
+    .empty-note { color: var(--muted); font-weight: 800; }
+
+    .complete-screen {
+      display: none;
+      text-align: center;
+      padding: 30px 10px;
+    }
+    .complete-screen.show { display: block; }
+    .door-game.hide { display: none; }
+    .complete-screen h2 { font-size: clamp(2.2rem, 7vw, 4.2rem); margin: 0 0 10px; color: var(--gold); }
+    .complete-screen p { color: var(--muted); font-size: 1.2rem; font-weight: 900; }
+
+    .fallback-note {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(520px, calc(100% - 32px));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(7,9,20,.78);
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      display: none;
+      backdrop-filter: blur(8px);
+    }
+
+    button:focus-visible, .hotspot:focus-visible, .cert:focus-visible {
+      outline: 3px solid rgba(56,189,248,.7);
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 800px) {
+      .slots { grid-template-columns: 1fr; }
+      .door-head { align-items: start; }
+      .info { left: 12px; right: 12px; top: 12px; justify-content: flex-end; }
+      .map-stage { padding: 76px 8px 8px; }
+      .map-img { max-height: calc(100vh - 88px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="cover" id="coverScreen" aria-label="遊戲開場封面">
+    <img src="cover.png" alt="大冒險地圖開場封面" />
+    <div class="cover-hint">點擊任意處開始冒險</div>
+  </div>
+
+  <main class="app">
+    <div class="info">
+      <div class="held">持有 <span id="heldCount">0</span> / 3</div>
+      <button class="clear-btn" id="clearProgress" type="button">🔄 清除進度</button>
+    </div>
+
+    <section class="map-stage" aria-label="大冒險地圖">
+      <div class="map-frame" id="mapFrame">
+        <img class="map-img" id="mapImage" src="map-bg.png" alt="大冒險地圖" />
+        <div class="fallback-note" id="fallbackNote">找不到 map-bg.png。請確認圖片放在「我的小遊戲」資料夾中。</div>
+        <div class="hotspot-layer" id="hotspotLayer"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="doorModal" role="dialog" aria-modal="true" aria-labelledby="doorTitle">
+    <div class="door-panel">
+      <div class="door-game" id="doorGame">
+        <div class="door-head">
+          <h2 id="doorTitle">通關大門</h2>
+          <button class="close-btn" id="closeDoor" type="button">關閉</button>
+        </div>
+        <div class="slots" id="slots"></div>
+        <div class="bag">
+          <div class="bag-title">背包欄：拖曳憑證到對應凹槽</div>
+          <div class="badge-row" id="bagRow"></div>
+        </div>
+      </div>
+
+      <div class="complete-screen" id="completeScreen">
+        <h2>🏆 冒險完成！</h2>
+        <p>總冒險時長：<span id="duration">00 分 00 秒</span></p>
+        <button class="modal-btn" id="restartAdventure" type="button">再次冒險</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LEVELS = [
+      { key: 'cert_dynasty', type: 'dynasty', icon: '🎴', name: '朝代配對', href: '示範1_朝代配對/index.html', cert: '朝代之印', short: '朝代' },
+      { key: 'cert_idiom', type: 'idiom', icon: '📝', name: '成語填字', href: '示範2_成語填字/index.html', cert: '成語之印', short: '成語' },
+      { key: 'cert_warrior', type: 'warrior', icon: '⚔️', name: '打怪 RPG', href: '示範3_打怪 RPG/index.html', cert: '勇者之印', short: '勇者' }
+    ];
+
+    const HOTSPOTS = [
+      { id: 'dynasty', levelType: 'dynasty', label: '朝代區', left: 22.4, top: 40.2, width: 22.5, height: 14.5, stampLeft: 31.2, stampTop: 34.4, action: 'level' },
+      { id: 'idiom', levelType: 'idiom', label: '成語區', left: 82.8, top: 42.4, width: 22.5, height: 14.5, stampLeft: 71.6, stampTop: 38.8, action: 'level' },
+      { id: 'warrior', levelType: 'warrior', label: '怪獸區', left: 21.4, top: 89.4, width: 29, height: 13.8, stampLeft: 32.7, stampTop: 84.8, action: 'level' },
+      { id: 'gate', label: '中央大門', left: 51.8, top: 72.8, width: 23, height: 13.2, action: 'door' }
+    ];
+
+    const heldCountEl = document.getElementById('heldCount');
+    const doorModal = document.getElementById('doorModal');
+    const slotsEl = document.getElementById('slots');
+    const bagRow = document.getElementById('bagRow');
+    const doorGame = document.getElementById('doorGame');
+    const completeScreen = document.getElementById('completeScreen');
+    const durationEl = document.getElementById('duration');
+    const hotspotLayer = document.getElementById('hotspotLayer');
+    const coverScreen = document.getElementById('coverScreen');
+    const mapImage = document.getElementById('mapImage');
+    const mapFrame = document.getElementById('mapFrame');
+    const fallbackNote = document.getElementById('fallbackNote');
+
+    let placed = new Set();
+    let dragging = null;
+
+    function init() {
+      if (!localStorage.getItem('adventure_start')) {
+        localStorage.setItem('adventure_start', String(Date.now()));
+      }
+      if (sessionStorage.getItem('cover_seen') === '1') {
+        coverScreen.classList.add('hide');
+      }
+      renderHotspots();
+      updateHeldCount();
+    }
+
+    function hasCert(level) {
+      return localStorage.getItem(level.key) === '1';
+    }
+
+    function renderHotspots() {
+      hotspotLayer.innerHTML = '';
+      HOTSPOTS.forEach(item => {
+        const area = document.createElement('div');
+        area.className = 'hotspot';
+        area.tabIndex = 0;
+        area.setAttribute('role', 'button');
+        area.setAttribute('aria-label', item.label);
+        Object.assign(area.style, {
+          left: `${item.left}%`,
+          top: `${item.top}%`,
+          width: `${item.width}%`,
+          height: `${item.height}%`
+        });
+        area.addEventListener('click', () => activateHotspot(item));
+        area.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            activateHotspot(item);
+          }
+        });
+        hotspotLayer.appendChild(area);
+
+        if (item.levelType) {
+          const level = LEVELS.find(levelItem => levelItem.type === item.levelType);
+          if (level && hasCert(level)) {
+            const stamp = document.createElement('div');
+            stamp.className = 'stamp show';
+            stamp.textContent = '✓';
+            stamp.style.left = `${item.stampLeft ?? item.left + item.width * .36}%`;
+            stamp.style.top = `${item.stampTop ?? item.top - item.height * .28}%`;
+            hotspotLayer.appendChild(stamp);
+          }
+        }
+      });
+    }
+
+    function activateHotspot(item) {
+      if (item.action === 'door') {
+        openDoor();
+        return;
+      }
+      const level = LEVELS.find(levelItem => levelItem.type === item.levelType);
+      if (level) window.location.href = level.href;
+    }
+
+    function updateHeldCount() {
+      heldCountEl.textContent = LEVELS.filter(hasCert).length;
+    }
+
+    function openDoor() {
+      placed = new Set();
+      doorGame.classList.remove('hide');
+      completeScreen.classList.remove('show');
+      renderSlots();
+      renderBag();
+      doorModal.classList.add('show');
+    }
+
+    function renderSlots() {
+      slotsEl.innerHTML = '';
+      LEVELS.forEach(level => {
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.dataset.accept = level.type;
+        slot.textContent = level.short;
+        slot.addEventListener('dragover', event => { event.preventDefault(); slot.classList.add('over'); });
+        slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+        slot.addEventListener('drop', event => {
+          event.preventDefault();
+          slot.classList.remove('over');
+          const type = event.dataTransfer.getData('text/plain');
+          const cert = document.querySelector(`.cert[data-type="${type}"]`);
+          tryPlace(cert, slot);
+        });
+        slotsEl.appendChild(slot);
+      });
+    }
+
+    function renderBag() {
+      bagRow.innerHTML = '';
+      const owned = LEVELS.filter(hasCert);
+      if (owned.length === 0) {
+        bagRow.innerHTML = '<div class="empty-note">尚未取得憑證，先去完成關卡吧。</div>';
+        return;
+      }
+      owned.forEach(level => bagRow.appendChild(createCert(level)));
+    }
+
+    function createCert(level) {
+      const cert = document.createElement('div');
+      cert.className = 'cert';
+      cert.draggable = true;
+      cert.tabIndex = 0;
+      cert.dataset.type = level.type;
+      cert.textContent = `${level.icon} ${level.cert}`;
+      cert.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('text/plain', level.type);
+        cert.classList.add('dragging');
+      });
+      cert.addEventListener('dragend', () => cert.classList.remove('dragging'));
+      cert.addEventListener('pointerdown', startPointerDrag);
+      return cert;
+    }
+
+    function tryPlace(cert, slot) {
+      if (!cert || cert.classList.contains('locked')) return;
+      if (slot.dataset.accept === cert.dataset.type) {
+        slot.innerHTML = '';
+        slot.appendChild(cert);
+        slot.classList.add('correct');
+        cert.classList.add('locked');
+        cert.draggable = false;
+        cert.style.left = '';
+        cert.style.top = '';
+        cert.classList.remove('dragging');
+        placed.add(cert.dataset.type);
+        if (placed.size === 3) showComplete();
+      } else {
+        slot.classList.remove('wrong');
+        void slot.offsetWidth;
+        slot.classList.add('wrong');
+        cert.classList.remove('wrong');
+        void cert.offsetWidth;
+        cert.classList.add('wrong');
+        setTimeout(() => cert.classList.remove('wrong'), 300);
+      }
+    }
+
+    function startPointerDrag(event) {
+      const cert = event.currentTarget;
+      if (cert.classList.contains('locked')) return;
+      event.preventDefault();
+      dragging = { cert, parent: cert.parentElement, next: cert.nextElementSibling };
+      cert.classList.add('dragging');
+      cert.style.left = `${event.clientX}px`;
+      cert.style.top = `${event.clientY}px`;
+      cert.setPointerCapture(event.pointerId);
+      cert.addEventListener('pointermove', movePointerDrag);
+      cert.addEventListener('pointerup', endPointerDrag);
+      cert.addEventListener('pointercancel', cancelPointerDrag);
+    }
+
+    function movePointerDrag(event) {
+      if (!dragging) return;
+      dragging.cert.style.left = `${event.clientX}px`;
+      dragging.cert.style.top = `${event.clientY}px`;
+      document.querySelectorAll('.slot').forEach(slot => slot.classList.remove('over'));
+      const slot = slotAt(event.clientX, event.clientY);
+      if (slot && !slot.classList.contains('correct')) slot.classList.add('over');
+    }
+
+    function endPointerDrag(event) {
+      if (!dragging) return;
+      const slot = slotAt(event.clientX, event.clientY);
+      document.querySelectorAll('.slot').forEach(item => item.classList.remove('over'));
+      if (slot && !slot.classList.contains('correct')) {
+        tryPlace(dragging.cert, slot);
+      }
+      if (!dragging.cert.classList.contains('locked')) returnToBag(dragging.cert);
+      cleanupPointer(dragging.cert);
+      dragging = null;
+    }
+
+    function cancelPointerDrag() {
+      if (!dragging) return;
+      returnToBag(dragging.cert);
+      cleanupPointer(dragging.cert);
+      dragging = null;
+    }
+
+    function slotAt(x, y) {
+      if (!dragging) return null;
+      dragging.cert.style.pointerEvents = 'none';
+      const element = document.elementFromPoint(x, y);
+      dragging.cert.style.pointerEvents = '';
+      return element ? element.closest('.slot') : null;
+    }
+
+    function returnToBag(cert) {
+      cert.classList.remove('dragging');
+      cert.style.left = '';
+      cert.style.top = '';
+      if (dragging.next && dragging.next.parentElement === dragging.parent) dragging.parent.insertBefore(cert, dragging.next);
+      else dragging.parent.appendChild(cert);
+    }
+
+    function cleanupPointer(cert) {
+      cert.removeEventListener('pointermove', movePointerDrag);
+      cert.removeEventListener('pointerup', endPointerDrag);
+      cert.removeEventListener('pointercancel', cancelPointerDrag);
+    }
+
+    function showComplete() {
+      const start = Number(localStorage.getItem('adventure_start')) || Date.now();
+      const seconds = Math.max(0, Math.floor((Date.now() - start) / 1000));
+      const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const ss = String(seconds % 60).padStart(2, '0');
+      durationEl.textContent = `${mm} 分 ${ss} 秒`;
+      doorGame.classList.add('hide');
+      completeScreen.classList.add('show');
+    }
+
+    function clearProgress() {
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem('adventure_start', String(Date.now()));
+      updateHeldCount();
+      renderHotspots();
+      doorModal.classList.remove('show');
+      coverScreen.classList.remove('hide');
+    }
+
+    function hideCover() {
+      sessionStorage.setItem('cover_seen', '1');
+      coverScreen.classList.add('hide');
+    }
+
+    coverScreen.addEventListener('click', hideCover);
+    coverScreen.addEventListener('keydown', hideCover);
+    mapImage.addEventListener('load', () => {
+      if (mapImage.naturalWidth && mapImage.naturalHeight) {
+        mapFrame.style.setProperty('--map-ratio', `${mapImage.naturalWidth} / ${mapImage.naturalHeight}`);
+      }
+    });
+    mapImage.addEventListener('error', () => {
+      fallbackNote.style.display = 'block';
+    });
+
+    document.getElementById('closeDoor').addEventListener('click', () => doorModal.classList.remove('show'));
+    document.getElementById('clearProgress').addEventListener('click', clearProgress);
+    document.getElementById('restartAdventure').addEventListener('click', clearProgress);
+    doorModal.addEventListener('click', event => {
+      if (event.target === doorModal) doorModal.classList.remove('show');
+    });
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,614 @@
+﻿<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>示範2_成語填字</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f4e1b6;
+      --paper-deep: #e5c98f;
+      --ink: #24170d;
+      --muted: #7a5b33;
+      --red: #b22222;
+      --red-bright: #df3a2f;
+      --green: #3f9f5f;
+      --wood: #f0d89f;
+      --line: rgba(91, 49, 20, .24);
+      --shadow: 0 22px 70px rgba(73, 42, 16, .2);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Noto Serif TC", "PMingLiU", "Microsoft JhengHei", serif;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(178,34,34,.1), transparent 22rem),
+        radial-gradient(circle at 80% 16%, rgba(118,74,28,.12), transparent 24rem),
+        linear-gradient(135deg, #f8e9c8, var(--paper) 48%, #ead0a0);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .35;
+      background-image:
+        radial-gradient(rgba(88, 54, 24, .14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88,54,24,.05), transparent 45%, rgba(88,54,24,.05));
+      background-size: 16px 16px, 120px 100%;
+      mix-blend-mode: multiply;
+    }
+
+    .app {
+      position: relative;
+      width: min(1060px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.1rem, 6vw, 4.4rem);
+      letter-spacing: .06em;
+      color: #3b1d10;
+      text-shadow: 0 2px 0 rgba(255,255,255,.38);
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .score-pill {
+      min-width: 138px;
+      border: 2px solid rgba(91,49,20,.28);
+      border-radius: 999px;
+      background: rgba(255, 246, 219, .62);
+      padding: 10px 14px;
+      text-align: center;
+      font-weight: 900;
+      box-shadow: inset 0 0 18px rgba(118,74,28,.07);
+    }
+
+    .scroll {
+      border: 2px solid rgba(91,49,20,.28);
+      border-radius: 20px;
+      background: rgba(255, 247, 223, .72);
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,.42);
+      padding: clamp(16px, 3vw, 28px);
+      overflow: hidden;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      color: var(--muted);
+      font-weight: 900;
+      margin-bottom: 18px;
+    }
+
+    .idiom-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(8px, 2vw, 14px);
+      margin: 18px auto 22px;
+      min-height: 88px;
+    }
+
+    .fixed-char, .blank {
+      width: clamp(58px, 12vw, 88px);
+      height: clamp(58px, 12vw, 88px);
+      display: grid;
+      place-items: center;
+      font-size: clamp(2.2rem, 8vw, 4.1rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .fixed-char {
+      color: #261509;
+    }
+
+    .blank {
+      position: relative;
+      border: 3px solid var(--red);
+      background:
+        linear-gradient(45deg, transparent calc(50% - 1px), rgba(178,34,34,.24), transparent calc(50% + 1px)),
+        linear-gradient(-45deg, transparent calc(50% - 1px), rgba(178,34,34,.24), transparent calc(50% + 1px)),
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(178,34,34,.18), transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent calc(50% - 1px), rgba(178,34,34,.18), transparent calc(50% + 1px)),
+        rgba(255, 244, 214, .74);
+      border-radius: 8px;
+      color: rgba(178,34,34,.32);
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .blank.over {
+      transform: translateY(-3px);
+      box-shadow: 0 0 24px rgba(178,34,34,.24);
+    }
+
+    .blank.correct {
+      color: var(--red);
+      text-shadow: 0 0 12px rgba(178,34,34,.22);
+      box-shadow: inset 0 0 0 2px rgba(178,34,34,.18), 0 8px 22px rgba(178,34,34,.12);
+    }
+
+    .answer-box {
+      min-height: 118px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 18px 0;
+      margin: 14px 0 18px;
+      text-align: center;
+    }
+
+    .feedback {
+      display: none;
+      color: var(--red);
+      font-size: clamp(1.35rem, 4vw, 2rem);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .meaning {
+      display: none;
+      color: var(--muted);
+      font-size: 1.08rem;
+      font-weight: 700;
+      max-width: 720px;
+      margin: 0 auto 14px;
+    }
+
+    .feedback.show, .meaning.show { display: block; }
+
+    .next-btn, .restart-btn {
+      display: none;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #c9302c, #8b1b13);
+      color: #fff7df;
+      padding: 12px 22px;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(178,34,34,.22);
+    }
+
+    .next-btn.show, .restart-btn.show { display: inline-block; }
+
+    .card-bank {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      touch-action: none;
+    }
+
+    .char-card {
+      height: 58px;
+      border: 2px solid rgba(91,49,20,.24);
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, rgba(145,86,37,.08), transparent 22%, rgba(145,86,37,.1) 55%, transparent),
+        linear-gradient(180deg, #f8e7bd, var(--wood));
+      color: #1d1209;
+      display: grid;
+      place-items: center;
+      font-size: 1.82rem;
+      font-weight: 900;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      box-shadow: 0 8px 0 rgba(91,49,20,.12), 0 14px 24px rgba(91,49,20,.12);
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+
+    .char-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 0 rgba(91,49,20,.11), 0 17px 28px rgba(91,49,20,.14);
+    }
+
+    .char-card.dragging {
+      position: fixed;
+      z-index: 30;
+      width: 72px;
+      pointer-events: none;
+      cursor: grabbing;
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 18px 34px rgba(91,49,20,.28);
+    }
+
+    .char-card.correct-card {
+      background: linear-gradient(180deg, #d7f4d5, #7fd489);
+      border-color: var(--green);
+      color: #143a18;
+    }
+
+    .char-card.wrong {
+      animation: wrongFlash .2s ease;
+    }
+
+    @keyframes wrongFlash {
+      0%, 100% { box-shadow: 0 8px 0 rgba(91,49,20,.12); }
+      50% { border-color: var(--red-bright); box-shadow: 0 0 26px rgba(223,58,47,.75); transform: translateX(5px); }
+    }
+
+    .result-screen {
+      display: none;
+      text-align: center;
+      padding: 28px 10px;
+    }
+
+    .result-screen.show { display: block; }
+    .game-screen.hide { display: none; }
+
+    .result-screen h2 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      color: var(--red);
+    }
+
+    .result-screen p {
+      color: var(--muted);
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    button:focus-visible, .char-card:focus-visible {
+      outline: 3px solid rgba(178,34,34,.42);
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 720px) {
+      .app { width: min(100% - 22px, 620px); padding-top: 18px; }
+      header { flex-direction: column; align-items: start; }
+      .score-pill { text-align: left; }
+      .card-bank {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        padding-bottom: 12px;
+        scroll-snap-type: x proximity;
+      }
+      .char-card {
+        flex: 0 0 64px;
+        scroll-snap-align: start;
+      }
+      .topline { flex-direction: column; align-items: start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>成語填字</h1>
+        <p class="subtitle">拖曳字卡，補上成語缺字。答對後會顯示成語意思。</p>
+      </div>
+      <div class="score-pill" aria-live="polite">成績 <span id="score">0</span> / 5</div>
+    </header>
+
+    <section class="scroll">
+      <div class="game-screen" id="gameScreen">
+        <div class="topline">
+          <div id="questionCount">第 1 / 5 題</div>
+          <div>拖曳字卡到紅色米字格</div>
+        </div>
+
+        <div class="idiom-line" id="idiomLine" aria-label="成語填字區"></div>
+
+        <div class="answer-box">
+          <div class="feedback" id="feedback">✓ 答對！</div>
+          <p class="meaning" id="meaning"></p>
+          <button class="next-btn" id="nextButton" type="button">下一題</button>
+        </div>
+
+        <div class="card-bank" id="cardBank" aria-label="字卡區"></div>
+      </div>
+
+      <div class="result-screen" id="resultScreen">
+        <h2>挑戰完成</h2>
+        <p>總成績：<span id="finalScore">0</span> / 5</p>
+        <button class="restart-btn show" id="restartButton" type="button">重新挑戰</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const QUESTIONS = [
+      { 成語: '一鳴驚人', 缺字: [1, 2], 答案: ['鳴', '驚'], 意思: '比喻平時默默無聞，突然有驚人表現。' },
+      { 成語: '風花雪月', 缺字: [1, 3], 答案: ['花', '月'], 意思: '原指四時景色，後比喻浮華空洞的詩文。' },
+      { 成語: '三番五次', 缺字: [1, 3], 答案: ['番', '次'], 意思: '形容次數很多。' },
+      { 成語: '一字千金', 缺字: [1, 3], 答案: ['字', '金'], 意思: '形容文字價值極高。' },
+      { 成語: '畫龍點睛', 缺字: [1, 3], 答案: ['龍', '睛'], 意思: '比喻在關鍵處點明要旨。' },
+      { 成語: '亡羊補牢', 缺字: [1, 3], 答案: ['羊', '牢'], 意思: '比喻出了差錯以後，及時設法補救，還不算晚。' },
+      { 成語: '守株待兔', 缺字: [1, 3], 答案: ['株', '兔'], 意思: '比喻拘泥舊經驗，不知變通，只想僥倖成功。' },
+      { 成語: '刻舟求劍', 缺字: [1, 3], 答案: ['舟', '劍'], 意思: '比喻方法不合時宜，固執而不知變通。' },
+      { 成語: '井底之蛙', 缺字: [1, 3], 答案: ['底', '蛙'], 意思: '比喻見識狹小的人。' },
+      { 成語: '杯弓蛇影', 缺字: [1, 2], 答案: ['弓', '蛇'], 意思: '比喻疑神疑鬼，自相驚擾。' },
+      { 成語: '雪中送炭', 缺字: [1, 3], 答案: ['中', '炭'], 意思: '比喻在別人急需時給予幫助。' },
+      { 成語: '破釜沉舟', 缺字: [1, 3], 答案: ['釜', '舟'], 意思: '比喻下定決心，不留退路。' }
+    ];
+
+    const DISTRACTORS = '天地山水日月風雲春秋東西南北仁義禮智信忠孝勇思明暗高低遠近真假善惡書劍花鳥魚龍虎馬竹梅松石玉金銀火木土雨雪霜露'.split('');
+    const TOTAL_ROUNDS = 5;
+
+    const idiomLine = document.getElementById('idiomLine');
+    const cardBank = document.getElementById('cardBank');
+    const questionCount = document.getElementById('questionCount');
+    const feedback = document.getElementById('feedback');
+    const meaning = document.getElementById('meaning');
+    const nextButton = document.getElementById('nextButton');
+    const scoreEl = document.getElementById('score');
+    const finalScore = document.getElementById('finalScore');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const restartButton = document.getElementById('restartButton');
+
+    let gameQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let filled = new Map();
+    let dragging = null;
+    let audioCtx = null;
+
+    function shuffle(list) {
+      const copy = [...list];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function startGame() {
+      gameQuestions = shuffle(QUESTIONS).slice(0, TOTAL_ROUNDS);
+      currentIndex = 0;
+      score = 0;
+      scoreEl.textContent = score;
+      resultScreen.classList.remove('show');
+      gameScreen.classList.remove('hide');
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const question = gameQuestions[currentIndex];
+      filled = new Map();
+      questionCount.textContent = `第 ${currentIndex + 1} / ${TOTAL_ROUNDS} 題`;
+      feedback.classList.remove('show');
+      meaning.classList.remove('show');
+      nextButton.classList.remove('show');
+      nextButton.textContent = currentIndex === TOTAL_ROUNDS - 1 ? '看總成績' : '下一題';
+      meaning.textContent = question.意思;
+      renderIdiom(question);
+      renderCards(question);
+    }
+
+    function renderIdiom(question) {
+      idiomLine.innerHTML = '';
+      [...question.成語].forEach((char, index) => {
+        if (question.缺字.includes(index)) {
+          const answerIndex = question.缺字.indexOf(index);
+          const blank = document.createElement('div');
+          blank.className = 'blank';
+          blank.dataset.answer = question.答案[answerIndex];
+          blank.dataset.blankIndex = answerIndex;
+          blank.textContent = '□';
+          idiomLine.appendChild(blank);
+        } else {
+          const fixed = document.createElement('div');
+          fixed.className = 'fixed-char';
+          fixed.textContent = char;
+          idiomLine.appendChild(fixed);
+        }
+      });
+    }
+
+    function renderCards(question) {
+      const answerChars = [...question.答案];
+      const used = new Set(answerChars);
+      const distractors = shuffle(DISTRACTORS.filter(char => !used.has(char))).slice(0, 13);
+      const cards = shuffle([...answerChars, ...distractors]);
+      cardBank.innerHTML = '';
+      cards.forEach((char, index) => {
+        const card = document.createElement('div');
+        card.className = 'char-card';
+        card.textContent = char;
+        card.dataset.char = char;
+        card.dataset.cardId = `${char}-${index}-${Date.now()}`;
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `字卡 ${char}`);
+        card.addEventListener('pointerdown', startDrag);
+        cardBank.appendChild(card);
+      });
+    }
+
+    function startDrag(event) {
+      const card = event.currentTarget;
+      if (card.classList.contains('correct-card')) return;
+      event.preventDefault();
+      playTap();
+      const rect = card.getBoundingClientRect();
+      dragging = {
+        card,
+        originalParent: card.parentElement,
+        nextSibling: card.nextElementSibling,
+        width: rect.width,
+        height: rect.height
+      };
+      card.style.left = `${event.clientX}px`;
+      card.style.top = `${event.clientY}px`;
+      card.classList.add('dragging');
+      card.setPointerCapture(event.pointerId);
+      card.addEventListener('pointermove', moveDrag);
+      card.addEventListener('pointerup', endDrag);
+      card.addEventListener('pointercancel', cancelDrag);
+    }
+
+    function moveDrag(event) {
+      if (!dragging) return;
+      dragging.card.style.left = `${event.clientX}px`;
+      dragging.card.style.top = `${event.clientY}px`;
+      document.querySelectorAll('.blank').forEach(blank => blank.classList.remove('over'));
+      const target = blankAt(event.clientX, event.clientY);
+      if (target && !target.classList.contains('correct')) target.classList.add('over');
+    }
+
+    function endDrag(event) {
+      if (!dragging) return;
+      const target = blankAt(event.clientX, event.clientY);
+      cleanupOver();
+      if (target && !target.classList.contains('correct') && target.dataset.answer === dragging.card.dataset.char) {
+        acceptCard(target, dragging.card);
+      } else {
+        rejectCard(dragging.card);
+      }
+      stopPointerListeners(dragging.card);
+      dragging = null;
+    }
+
+    function cancelDrag() {
+      if (!dragging) return;
+      cleanupOver();
+      rejectCard(dragging.card);
+      stopPointerListeners(dragging.card);
+      dragging = null;
+    }
+
+    function blankAt(x, y) {
+      const previousPointer = dragging?.card.style.pointerEvents;
+      if (dragging) dragging.card.style.pointerEvents = 'none';
+      const element = document.elementFromPoint(x, y);
+      if (dragging) dragging.card.style.pointerEvents = previousPointer || '';
+      return element ? element.closest('.blank') : null;
+    }
+
+    function acceptCard(blank, card) {
+      blank.textContent = card.dataset.char;
+      blank.classList.add('correct');
+      filled.set(blank.dataset.blankIndex, card.dataset.char);
+      card.classList.remove('dragging');
+      card.classList.add('correct-card');
+      card.style.left = '';
+      card.style.top = '';
+      card.style.width = '';
+      cardBank.removeChild(card);
+      playBell();
+      if (filled.size === 2) completeQuestion();
+    }
+
+    function rejectCard(card) {
+      card.classList.remove('dragging');
+      card.classList.remove('wrong');
+      card.style.left = '';
+      card.style.top = '';
+      card.style.width = '';
+      if (dragging.nextSibling && dragging.nextSibling.parentElement === dragging.originalParent) {
+        dragging.originalParent.insertBefore(card, dragging.nextSibling);
+      } else {
+        dragging.originalParent.appendChild(card);
+      }
+      void card.offsetWidth;
+      card.classList.add('wrong');
+      setTimeout(() => card.classList.remove('wrong'), 230);
+    }
+
+    function completeQuestion() {
+      score += 1;
+      scoreEl.textContent = score;
+      feedback.classList.add('show');
+      meaning.classList.add('show');
+      nextButton.classList.add('show');
+    }
+
+    function nextQuestion() {
+      currentIndex += 1;
+      if (currentIndex >= TOTAL_ROUNDS) {
+        showResult();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function showResult() {
+      finalScore.textContent = score;
+      gameScreen.classList.add('hide');
+      resultScreen.classList.add('show');
+    }
+
+    function cleanupOver() {
+      document.querySelectorAll('.blank').forEach(blank => blank.classList.remove('over'));
+    }
+
+    function stopPointerListeners(card) {
+      card.removeEventListener('pointermove', moveDrag);
+      card.removeEventListener('pointerup', endDrag);
+      card.removeEventListener('pointercancel', cancelDrag);
+    }
+
+    function getAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTap() {
+      const audio = getAudio();
+      const now = audio.currentTime;
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(180, now);
+      gain.gain.setValueAtTime(.018, now);
+      gain.gain.exponentialRampToValueAtTime(.001, now + .04);
+      osc.connect(gain);
+      gain.connect(audio.destination);
+      osc.start(now);
+      osc.stop(now + .045);
+    }
+
+    function playBell() {
+      const audio = getAudio();
+      const now = audio.currentTime;
+      [740, 980, 1240].forEach((freq, index) => {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + index * .035);
+        gain.gain.setValueAtTime(.052, now + index * .035);
+        gain.gain.exponentialRampToValueAtTime(.001, now + .28 + index * .035);
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start(now + index * .035);
+        osc.stop(now + .32 + index * .035);
+      });
+    }
+
+    nextButton.addEventListener('click', nextQuestion);
+    restartButton.addEventListener('click', startGame);
+    startGame();
+  </script>
+</body>
+</html>
