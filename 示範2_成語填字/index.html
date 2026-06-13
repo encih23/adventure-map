@@ -183,7 +183,7 @@
 
     .feedback.show, .meaning.show { display: block; }
 
-    .next-btn, .restart-btn {
+    .next-btn, .restart-btn, .map-return {
       display: none;
       border: 0;
       border-radius: 999px;
@@ -194,9 +194,11 @@
       font-weight: 900;
       cursor: pointer;
       box-shadow: 0 10px 24px rgba(178,34,34,.22);
+      text-decoration: none;
+      margin: 6px;
     }
 
-    .next-btn.show, .restart-btn.show { display: inline-block; }
+    .next-btn.show, .restart-btn.show, .map-return.show { display: inline-block; }
 
     .card-bank {
       display: grid;
@@ -280,6 +282,22 @@
       outline-offset: 3px;
     }
 
+    .map-home {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      z-index: 20;
+      border: 1px solid rgba(139,27,19,.32);
+      border-radius: 999px;
+      background: rgba(255, 247, 223, .86);
+      color: #8b1b13;
+      padding: 9px 13px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 10px 26px rgba(80, 34, 12, .18);
+      backdrop-filter: blur(8px);
+    }
+
     @media (max-width: 720px) {
       .app { width: min(100% - 22px, 620px); padding-top: 18px; }
       header { flex-direction: column; align-items: start; }
@@ -300,6 +318,7 @@
   </style>
 </head>
 <body>
+  <a class="map-home" href="../index.html">← 大地圖</a>
   <main class="app">
     <header>
       <div>
@@ -330,6 +349,7 @@
       <div class="result-screen" id="resultScreen">
         <h2>挑戰完成</h2>
         <p>總成績：<span id="finalScore">0</span> / 5</p>
+        <a class="map-return show" href="../index.html">回到大地圖</a>
         <button class="restart-btn show" id="restartButton" type="button">重新挑戰</button>
       </div>
     </section>
@@ -553,6 +573,7 @@
     }
 
     function showResult() {
+      localStorage.setItem('cert_idiom', '1');
       finalScore.textContent = score;
       gameScreen.classList.add('hide');
       resultScreen.classList.add('show');

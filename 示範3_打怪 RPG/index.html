@@ -186,6 +186,8 @@
       font: inherit;
       font-weight: 950;
       cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
     }
     .btn.secondary { background: #2a334b; color: var(--text); border: 1px solid var(--line); }
     .btn:disabled { filter: grayscale(.7); opacity: .55; cursor: not-allowed; }
@@ -216,6 +218,22 @@
     .gameover h2 { color: #fff; text-shadow: 0 0 22px rgba(251,75,95,.7); }
     .summary { color: var(--muted); font-size: 1.18rem; font-weight: 850; line-height: 1.9; }
 
+    .map-home {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      z-index: 20;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(7,9,16,.78);
+      color: var(--gold);
+      padding: 9px 13px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 10px 26px rgba(0,0,0,.28);
+      backdrop-filter: blur(8px);
+    }
+
     @media (max-width: 850px) {
       body { padding: 10px; align-items: start; }
       .app { border-radius: 18px; min-height: calc(100vh - 20px); }
@@ -227,6 +245,7 @@
   </style>
 </head>
 <body>
+  <a class="map-home" href="../index.html">← 大地圖</a>
   <main class="app" id="app">
     <div class="topbar">
       <h1>打怪 RPG 數學測驗</h1>
@@ -310,6 +329,7 @@
       <div>
         <h2>通關成功！</h2>
         <div class="summary" id="finalSummary"></div>
+        <a class="btn" href="../index.html">回到大地圖</a>
         <button class="btn" id="restartWin" type="button">重新挑戰</button>
       </div>
     </section>
@@ -565,6 +585,7 @@
     }
 
     function showFinal() {
+      localStorage.setItem('cert_warrior', '1');
       $('finalSummary').innerHTML = `答對題數：${state.correct}<br>剩餘金幣：${state.coins}<br>使用紅藥水：${state.usedPotions} 瓶`;
       show('finalScreen');
     }

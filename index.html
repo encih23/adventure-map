@@ -557,7 +557,7 @@
       { id: 'dynasty', levelType: 'dynasty', label: '朝代區', left: 22.4, top: 40.2, width: 22.5, height: 14.5, stampLeft: 31.2, stampTop: 34.4, action: 'level' },
       { id: 'idiom', levelType: 'idiom', label: '成語區', left: 82.8, top: 42.4, width: 22.5, height: 14.5, stampLeft: 71.6, stampTop: 38.8, action: 'level' },
       { id: 'warrior', levelType: 'warrior', label: '怪獸區', left: 21.4, top: 89.4, width: 29, height: 13.8, stampLeft: 32.7, stampTop: 84.8, action: 'level' },
-      { id: 'gate', label: '中央大門', left: 51.8, top: 72.8, width: 23, height: 13.2, action: 'door' }
+      { id: 'gate', label: '中央大門', left: 51.8, top: 61.5, width: 34, height: 35, action: 'door' }
     ];
 
     const ENDING_SCENES = [
@@ -714,6 +714,14 @@
         return;
       }
       owned.forEach(level => bagRow.appendChild(createCert(level)));
+      if (owned.length === LEVELS.length) {
+        const startButton = document.createElement('button');
+        startButton.className = 'modal-btn';
+        startButton.type = 'button';
+        startButton.textContent = '開啟結局任務';
+        startButton.addEventListener('click', startEnding);
+        bagRow.appendChild(startButton);
+      }
     }
 
     function createCert(level) {
