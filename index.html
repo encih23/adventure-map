@@ -180,19 +180,25 @@
       box-shadow: none;
     }
 
-    .label-patch {
+    .gate-title {
       position: absolute;
       z-index: 3;
       display: grid;
       place-items: center;
-      border-radius: 999px;
-      color: #fff8dc;
-      font-weight: 1000;
-      font-size: clamp(.95rem, 2vw, 1.35rem);
-      text-shadow: 0 2px 0 rgba(0,0,0,.2);
-      pointer-events: none;
+      left: 50.8%;
+      top: 56.8%;
       transform: translate(-50%, -50%);
-      box-shadow: inset 0 -4px 0 rgba(0,0,0,.16), 0 4px 10px rgba(0,0,0,.12);
+      color: #5a2a12;
+      font-weight: 1000;
+      font-size: clamp(1.55rem, 3.2vw, 3rem);
+      letter-spacing: .06em;
+      text-shadow:
+        0 2px 0 #fff1bc,
+        0 -1px 0 #fff1bc,
+        2px 0 0 #fff1bc,
+        -2px 0 0 #fff1bc,
+        0 5px 10px rgba(0,0,0,.18);
+      pointer-events: none;
     }
 
     .stamp {
@@ -497,6 +503,7 @@
       <div class="map-frame" id="mapFrame">
         <img class="map-img" id="mapImage" src="map-bg.png" alt="大冒險地圖" />
         <div class="fallback-note" id="fallbackNote">找不到 map-bg.png。請確認圖片放在「我的小遊戲」資料夾中。</div>
+        <div class="gate-title" aria-hidden="true">中央大門</div>
         <div class="hotspot-layer" id="hotspotLayer"></div>
       </div>
     </section>
@@ -546,13 +553,6 @@
       { id: 'idiom', levelType: 'idiom', label: '成語區', left: 82.8, top: 42.4, width: 22.5, height: 14.5, action: 'level' },
       { id: 'warrior', levelType: 'warrior', label: '怪獸區', left: 21.4, top: 89.4, width: 29, height: 13.8, action: 'level' },
       { id: 'gate', label: '中央大門', left: 51.8, top: 61.5, width: 34, height: 35, action: 'door' }
-    ];
-
-    const LABEL_PATCHES = [
-      { left: 21.3, top: 31.4, width: 8.2, height: 4.6, color: '#d92620' },
-      { left: 80.7, top: 36.2, width: 7.1, height: 5.1, color: '#57b63b' },
-      { left: 19.2, top: 86.4, width: 8.8, height: 5.1, color: '#9b42d0' },
-      { left: 51.0, top: 66.7, width: 8.3, height: 5.1, color: '#1977d2' }
     ];
 
     const GATE_STAMPS = [
@@ -631,7 +631,6 @@
 
     function renderHotspots() {
       hotspotLayer.innerHTML = '';
-      renderLabelPatches();
       renderGateStamps();
       HOTSPOTS.forEach(item => {
         const area = document.createElement('div');
@@ -654,22 +653,6 @@
           }
         });
         hotspotLayer.appendChild(area);
-      });
-    }
-
-    function renderLabelPatches() {
-      LABEL_PATCHES.forEach(item => {
-        const patch = document.createElement('div');
-        patch.className = 'label-patch';
-        patch.setAttribute('aria-hidden', 'true');
-        Object.assign(patch.style, {
-          left: `${item.left}%`,
-          top: `${item.top}%`,
-          width: `${item.width}%`,
-          height: `${item.height}%`,
-          background: item.color
-        });
-        hotspotLayer.appendChild(patch);
       });
     }
 
