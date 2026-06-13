@@ -306,6 +306,62 @@
 
     .empty-note { color: var(--muted); font-weight: 800; }
 
+    .ending-screen {
+      display: none;
+      position: relative;
+      min-height: min(72vh, 620px);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #070914;
+      cursor: pointer;
+    }
+
+    .ending-screen.show { display: block; }
+    .ending-screen img {
+      width: 100%;
+      height: min(72vh, 620px);
+      object-fit: contain;
+      display: block;
+      background: #05060b;
+    }
+
+    .ending-caption {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 16px;
+      background: rgba(5, 7, 15, .72);
+      padding: 16px 18px;
+      box-shadow: 0 18px 44px rgba(0,0,0,.36);
+      backdrop-filter: blur(10px);
+    }
+
+    .ending-title {
+      color: var(--gold);
+      font-weight: 1000;
+      font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+      margin-bottom: 8px;
+    }
+
+    .ending-text {
+      margin: 0;
+      color: #fff8dc;
+      font-size: clamp(1rem, 2vw, 1.22rem);
+      font-weight: 850;
+      line-height: 1.7;
+      white-space: pre-line;
+    }
+
+    .ending-next {
+      margin-top: 12px;
+      color: rgba(255,255,255,.74);
+      font-size: .92rem;
+      font-weight: 900;
+      text-align: right;
+    }
+
     .complete-screen {
       display: none;
       text-align: center;
@@ -313,6 +369,7 @@
     }
     .complete-screen.show { display: block; }
     .door-game.hide { display: none; }
+    .ending-screen.hide { display: none; }
     .complete-screen h2 { font-size: clamp(2.2rem, 7vw, 4.2rem); margin: 0 0 10px; color: var(--gold); }
     .complete-screen p { color: var(--muted); font-size: 1.2rem; font-weight: 900; }
 
@@ -343,6 +400,9 @@
       .info { left: 12px; right: 12px; top: 12px; justify-content: flex-end; }
       .map-stage { padding: 76px 8px 8px; }
       .map-img { max-height: calc(100vh - 88px); }
+      .door-panel { padding: 14px; }
+      .ending-screen img { height: min(68vh, 520px); }
+      .ending-caption { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
     }
   </style>
 </head>
@@ -381,6 +441,15 @@
         </div>
       </div>
 
+      <div class="ending-screen" id="endingScreen" role="button" tabindex="0" aria-label="結局過場，點擊前進">
+        <img id="endingImage" src="1.png" alt="結局過場圖" />
+        <div class="ending-caption">
+          <div class="ending-title" id="endingTitle">三印歸位</div>
+          <p class="ending-text" id="endingText"></p>
+          <div class="ending-next" id="endingNext">點一下繼續</div>
+        </div>
+      </div>
+
       <div class="complete-screen" id="completeScreen">
         <h2>🏆 冒險完成！</h2>
         <p>總冒險時長：<span id="duration">00 分 00 秒</span></p>
@@ -403,11 +472,39 @@
       { id: 'gate', label: '中央大門', left: 51.8, top: 72.8, width: 23, height: 13.2, action: 'door' }
     ];
 
+    const ENDING_SCENES = [
+      {
+        image: '1.png',
+        title: '三印歸位',
+        text: '三枚印記沒有喊出勝利，卻讓沉睡的門，想起了自己的名字。'
+      },
+      {
+        image: '2.png',
+        title: '門後之城',
+        text: '小勇者：原來門後面不是終點……\n小書童：是下一段故事在等我們。'
+      },
+      {
+        image: '3.png',
+        title: '歷史星河',
+        text: '走過的路沒有消失。\n它們換了模樣，成為夜裡認得你的星。'
+      },
+      {
+        image: '4.png',
+        title: '新的卷軸',
+        text: '小勇者：這次，換我們把故事寫下來。\n風翻開第一頁，名字還沒落筆，冒險已經開始。'
+      }
+    ];
+
     const heldCountEl = document.getElementById('heldCount');
     const doorModal = document.getElementById('doorModal');
     const slotsEl = document.getElementById('slots');
     const bagRow = document.getElementById('bagRow');
     const doorGame = document.getElementById('doorGame');
+    const endingScreen = document.getElementById('endingScreen');
+    const endingImage = document.getElementById('endingImage');
+    const endingTitle = document.getElementById('endingTitle');
+    const endingText = document.getElementById('endingText');
+    const endingNext = document.getElementById('endingNext');
     const completeScreen = document.getElementById('completeScreen');
     const durationEl = document.getElementById('duration');
     const hotspotLayer = document.getElementById('hotspotLayer');
@@ -418,6 +515,7 @@
 
     let placed = new Set();
     let dragging = null;
+    let endingIndex = 0;
 
     function init() {
       if (!localStorage.getItem('adventure_start')) {
@@ -487,6 +585,8 @@
     function openDoor() {
       placed = new Set();
       doorGame.classList.remove('hide');
+      endingScreen.classList.remove('show');
+      endingScreen.classList.remove('hide');
       completeScreen.classList.remove('show');
       renderSlots();
       renderBag();
@@ -551,7 +651,7 @@
         cert.style.top = '';
         cert.classList.remove('dragging');
         placed.add(cert.dataset.type);
-        if (placed.size === 3) showComplete();
+        if (placed.size === 3) startEnding();
       } else {
         slot.classList.remove('wrong');
         void slot.offsetWidth;
@@ -627,6 +727,33 @@
       cert.removeEventListener('pointercancel', cancelPointerDrag);
     }
 
+    function startEnding() {
+      endingIndex = 0;
+      doorGame.classList.add('hide');
+      completeScreen.classList.remove('show');
+      endingScreen.classList.add('show');
+      renderEndingScene();
+    }
+
+    function renderEndingScene() {
+      const scene = ENDING_SCENES[endingIndex];
+      endingImage.src = scene.image;
+      endingImage.alt = `結局過場圖：${scene.title}`;
+      endingTitle.textContent = scene.title;
+      endingText.textContent = scene.text;
+      endingNext.textContent = endingIndex === ENDING_SCENES.length - 1 ? '點一下完成冒險' : '點一下繼續';
+    }
+
+    function advanceEnding() {
+      if (!endingScreen.classList.contains('show')) return;
+      endingIndex += 1;
+      if (endingIndex >= ENDING_SCENES.length) {
+        showComplete();
+        return;
+      }
+      renderEndingScene();
+    }
+
     function showComplete() {
       const start = Number(localStorage.getItem('adventure_start')) || Date.now();
       const seconds = Math.max(0, Math.floor((Date.now() - start) / 1000));
@@ -634,6 +761,8 @@
       const ss = String(seconds % 60).padStart(2, '0');
       durationEl.textContent = `${mm} 分 ${ss} 秒`;
       doorGame.classList.add('hide');
+      endingScreen.classList.remove('show');
+      endingScreen.classList.add('hide');
       completeScreen.classList.add('show');
     }
 
@@ -644,6 +773,8 @@
       updateHeldCount();
       renderHotspots();
       doorModal.classList.remove('show');
+      endingScreen.classList.remove('show');
+      endingScreen.classList.remove('hide');
       coverScreen.classList.remove('hide');
     }
 
@@ -666,6 +797,13 @@
     document.getElementById('closeDoor').addEventListener('click', () => doorModal.classList.remove('show'));
     document.getElementById('clearProgress').addEventListener('click', clearProgress);
     document.getElementById('restartAdventure').addEventListener('click', clearProgress);
+    endingScreen.addEventListener('click', advanceEnding);
+    endingScreen.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        advanceEnding();
+      }
+    });
     doorModal.addEventListener('click', event => {
       if (event.target === doorModal) doorModal.classList.remove('show');
     });
