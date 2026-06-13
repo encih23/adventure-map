@@ -170,6 +170,31 @@
       box-shadow: 0 0 28px rgba(255,255,255,.24), inset 0 0 28px rgba(255,255,255,.1);
     }
 
+    .hotspot.locked {
+      cursor: not-allowed;
+    }
+
+    .hotspot.locked:hover {
+      border-color: transparent;
+      background: rgba(0,0,0,0);
+      box-shadow: none;
+    }
+
+    .label-patch {
+      position: absolute;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff8dc;
+      font-weight: 1000;
+      font-size: clamp(.95rem, 2vw, 1.35rem);
+      text-shadow: 0 2px 0 rgba(0,0,0,.2);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,.16), 0 4px 10px rgba(0,0,0,.12);
+    }
+
     .stamp {
       position: absolute;
       z-index: 2;
@@ -189,6 +214,24 @@
     }
 
     .stamp.show { display: grid; }
+
+    .gate-stamp {
+      position: absolute;
+      z-index: 4;
+      width: clamp(34px, 4vw, 48px);
+      height: clamp(34px, 4vw, 48px);
+      display: grid;
+      place-items: center;
+      border: 3px solid rgba(74,222,128,.92);
+      border-radius: 50%;
+      background: rgba(9, 46, 24, .84);
+      color: #bbffd0;
+      font-size: clamp(.9rem, 1.8vw, 1.18rem);
+      font-weight: 1000;
+      box-shadow: 0 0 20px rgba(74,222,128,.52), inset 0 0 12px rgba(74,222,128,.18);
+      transform: translate(-50%, -50%) rotate(-10deg);
+      pointer-events: none;
+    }
 
     .modal {
       position: fixed;
@@ -273,41 +316,6 @@
 
     .bag-title { color: var(--gold); font-weight: 1000; margin-bottom: 10px; }
     .badge-row { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; align-items: center; }
-
-    .mission-brief {
-      margin: 0 0 16px;
-      border: 1px solid rgba(255,209,102,.24);
-      border-radius: 16px;
-      background: rgba(255,255,255,.045);
-      padding: 14px;
-      color: var(--muted);
-      font-weight: 850;
-      line-height: 1.7;
-    }
-
-    .mission-brief strong {
-      display: block;
-      color: var(--gold);
-      font-size: 1.05rem;
-      margin-bottom: 6px;
-    }
-
-    .mission-steps {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .mission-step {
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 999px;
-      padding: 7px 10px;
-      background: rgba(7,9,20,.38);
-      color: #fff8dc;
-      font-size: .9rem;
-      font-weight: 950;
-    }
 
     .cert {
       border: 1px solid rgba(255,209,102,.45);
@@ -501,16 +509,6 @@
           <h2 id="doorTitle">通關大門</h2>
           <button class="close-btn" id="closeDoor" type="button">關閉</button>
         </div>
-        <div class="mission-brief" aria-label="中央大門任務">
-          <strong>中央大門任務</strong>
-          完成三個區域會各播放一幕過場動畫。集滿三枚印記後，放入凹槽啟動中央大門，播放最後一幕。
-          <div class="mission-steps" aria-label="任務步驟">
-            <span class="mission-step">1 朝代之印</span>
-            <span class="mission-step">2 成語之印</span>
-            <span class="mission-step">3 勇者之印</span>
-            <span class="mission-step">4 開啟中央大門</span>
-          </div>
-        </div>
         <div class="slots" id="slots"></div>
         <div class="bag">
           <div class="bag-title">背包欄：拖曳憑證到對應凹槽</div>
@@ -544,10 +542,23 @@
     ];
 
     const HOTSPOTS = [
-      { id: 'dynasty', levelType: 'dynasty', label: '朝代區', left: 22.4, top: 40.2, width: 22.5, height: 14.5, stampLeft: 31.2, stampTop: 34.4, action: 'level' },
-      { id: 'idiom', levelType: 'idiom', label: '成語區', left: 82.8, top: 42.4, width: 22.5, height: 14.5, stampLeft: 71.6, stampTop: 38.8, action: 'level' },
-      { id: 'warrior', levelType: 'warrior', label: '怪獸區', left: 21.4, top: 89.4, width: 29, height: 13.8, stampLeft: 32.7, stampTop: 84.8, action: 'level' },
+      { id: 'dynasty', levelType: 'dynasty', label: '朝代區', left: 22.4, top: 40.2, width: 22.5, height: 14.5, action: 'level' },
+      { id: 'idiom', levelType: 'idiom', label: '成語區', left: 82.8, top: 42.4, width: 22.5, height: 14.5, action: 'level' },
+      { id: 'warrior', levelType: 'warrior', label: '怪獸區', left: 21.4, top: 89.4, width: 29, height: 13.8, action: 'level' },
       { id: 'gate', label: '中央大門', left: 51.8, top: 61.5, width: 34, height: 35, action: 'door' }
+    ];
+
+    const LABEL_PATCHES = [
+      { text: '1', left: 21.3, top: 31.4, width: 8.2, height: 4.6, color: '#d92620' },
+      { text: '2', left: 80.7, top: 36.2, width: 7.1, height: 5.1, color: '#57b63b' },
+      { text: '3', left: 19.2, top: 86.4, width: 8.8, height: 5.1, color: '#9b42d0' },
+      { text: '4', left: 51.0, top: 66.7, width: 8.3, height: 5.1, color: '#1977d2' }
+    ];
+
+    const GATE_STAMPS = [
+      { left: 45.0, top: 40.4 },
+      { left: 50.3, top: 40.4 },
+      { left: 55.8, top: 40.4 }
     ];
 
     const CUTSCENES = [
@@ -620,12 +631,15 @@
 
     function renderHotspots() {
       hotspotLayer.innerHTML = '';
+      renderLabelPatches();
+      renderGateStamps();
       HOTSPOTS.forEach(item => {
         const area = document.createElement('div');
         area.className = 'hotspot';
+        if (item.action === 'door' && !hasAllCerts()) area.classList.add('locked');
         area.tabIndex = 0;
         area.setAttribute('role', 'button');
-        area.setAttribute('aria-label', item.label);
+        area.setAttribute('aria-label', item.action === 'door' && !hasAllCerts() ? '中央大門尚未集滿三印' : item.label);
         Object.assign(area.style, {
           left: `${item.left}%`,
           top: `${item.top}%`,
@@ -640,23 +654,42 @@
           }
         });
         hotspotLayer.appendChild(area);
+      });
+    }
 
-        if (item.levelType) {
-          const level = LEVELS.find(levelItem => levelItem.type === item.levelType);
-          if (level && hasCert(level)) {
-            const stamp = document.createElement('div');
-            stamp.className = 'stamp show';
-            stamp.textContent = '✓';
-            stamp.style.left = `${item.stampLeft ?? item.left + item.width * .36}%`;
-            stamp.style.top = `${item.stampTop ?? item.top - item.height * .28}%`;
-            hotspotLayer.appendChild(stamp);
-          }
-        }
+    function renderLabelPatches() {
+      LABEL_PATCHES.forEach(item => {
+        const patch = document.createElement('div');
+        patch.className = 'label-patch';
+        patch.textContent = item.text;
+        Object.assign(patch.style, {
+          left: `${item.left}%`,
+          top: `${item.top}%`,
+          width: `${item.width}%`,
+          height: `${item.height}%`,
+          background: item.color
+        });
+        hotspotLayer.appendChild(patch);
+      });
+    }
+
+    function renderGateStamps() {
+      LEVELS.filter(hasCert).forEach((level, index) => {
+        const position = GATE_STAMPS[index];
+        if (!position) return;
+        const stamp = document.createElement('div');
+        stamp.className = 'gate-stamp';
+        stamp.textContent = '印';
+        stamp.setAttribute('aria-label', `${level.cert} 已取得`);
+        stamp.style.left = `${position.left}%`;
+        stamp.style.top = `${position.top}%`;
+        hotspotLayer.appendChild(stamp);
       });
     }
 
     function activateHotspot(item) {
       if (item.action === 'door') {
+        if (!hasAllCerts()) return;
         openDoor();
         return;
       }
@@ -666,6 +699,10 @@
 
     function updateHeldCount() {
       heldCountEl.textContent = LEVELS.filter(hasCert).length;
+    }
+
+    function hasAllCerts() {
+      return LEVELS.every(hasCert);
     }
 
     function openDoor() {
@@ -707,14 +744,6 @@
         return;
       }
       owned.forEach(level => bagRow.appendChild(createCert(level)));
-      if (owned.length === LEVELS.length) {
-        const startButton = document.createElement('button');
-        startButton.className = 'modal-btn';
-        startButton.type = 'button';
-        startButton.textContent = '開啟中央大門';
-        startButton.addEventListener('click', startGateCutscene);
-        bagRow.appendChild(startButton);
-      }
     }
 
     function createCert(level) {
