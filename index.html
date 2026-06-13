@@ -503,12 +503,12 @@
         </div>
         <div class="mission-brief" aria-label="中央大門任務">
           <strong>中央大門任務</strong>
-          完成三個區域，取得三枚印記，放入凹槽後啟動大門。大門開啟時會播放四幕過場動畫。
+          完成三個區域會各播放一幕過場動畫。集滿三枚印記後，放入凹槽啟動中央大門，播放最後一幕。
           <div class="mission-steps" aria-label="任務步驟">
             <span class="mission-step">1 朝代之印</span>
             <span class="mission-step">2 成語之印</span>
             <span class="mission-step">3 勇者之印</span>
-            <span class="mission-step">4 啟動過場動畫</span>
+            <span class="mission-step">4 開啟中央大門</span>
           </div>
         </div>
         <div class="slots" id="slots"></div>
@@ -518,10 +518,10 @@
         </div>
       </div>
 
-      <div class="ending-screen" id="endingScreen" role="button" tabindex="0" aria-label="結局過場，點擊前進">
+      <div class="ending-screen" id="endingScreen" role="button" tabindex="0" aria-label="關卡過場，點擊前進">
         <img id="endingImage" src="1.png" alt="結局過場圖" />
         <div class="ending-caption">
-          <div class="ending-kicker" id="endingKicker">過場動畫 1 / 4</div>
+          <div class="ending-kicker" id="endingKicker">朝代區通關過場</div>
           <div class="ending-title" id="endingTitle">三印歸位</div>
           <p class="ending-text" id="endingText"></p>
           <div class="ending-next" id="endingNext">點一下繼續</div>
@@ -538,9 +538,9 @@
 
   <script>
     const LEVELS = [
-      { key: 'cert_dynasty', type: 'dynasty', icon: '🎴', name: '朝代配對', href: '示範1_朝代配對/index.html', cert: '朝代之印', short: '朝代' },
-      { key: 'cert_idiom', type: 'idiom', icon: '📝', name: '成語填字', href: '示範2_成語填字/index.html', cert: '成語之印', short: '成語' },
-      { key: 'cert_warrior', type: 'warrior', icon: '⚔️', name: '打怪 RPG', href: '示範3_打怪RPG/index.html', cert: '勇者之印', short: '勇者' }
+      { key: 'cert_dynasty', cutsceneKey: 'cutscene_dynasty', sceneIndex: 0, type: 'dynasty', icon: '🎴', name: '朝代配對', href: '示範1_朝代配對/index.html', cert: '朝代之印', short: '朝代' },
+      { key: 'cert_idiom', cutsceneKey: 'cutscene_idiom', sceneIndex: 1, type: 'idiom', icon: '📝', name: '成語填字', href: '示範2_成語填字/index.html', cert: '成語之印', short: '成語' },
+      { key: 'cert_warrior', cutsceneKey: 'cutscene_warrior', sceneIndex: 2, type: 'warrior', icon: '⚔️', name: '打怪 RPG', href: '示範3_打怪RPG/index.html', cert: '勇者之印', short: '勇者' }
     ];
 
     const HOTSPOTS = [
@@ -550,28 +550,28 @@
       { id: 'gate', label: '中央大門', left: 51.8, top: 61.5, width: 34, height: 35, action: 'door' }
     ];
 
-    const ENDING_SCENES = [
+    const CUTSCENES = [
       {
         image: '1.png',
-        mission: '過場動畫 1 / 4',
-        title: '三印歸位',
-        text: '三枚印記沒有喊出勝利，卻讓沉睡的門，想起了自己的名字。'
+        mission: '朝代區通關過場',
+        title: '朝代之印',
+        text: '第一枚印記亮起，古老年代像晨光一樣，沿著石刻慢慢回到門前。'
       },
       {
         image: '2.png',
-        mission: '過場動畫 2 / 4',
-        title: '門後之城',
-        text: '小勇者：原來門後面不是終點……\n小書童：是下一段故事在等我們。'
+        mission: '成語區通關過場',
+        title: '書頁之城',
+        text: '成語之印輕輕轉動，雲與書頁之間，有一座城把答案藏進鐘聲裡。'
       },
       {
         image: '3.png',
-        mission: '過場動畫 3 / 4',
-        title: '歷史星河',
-        text: '走過的路沒有消失。\n它們換了模樣，成為夜裡認得你的星。'
+        mission: '怪獸區通關過場',
+        title: '勇者星河',
+        text: '打敗怪獸後，腳下的路沒有消失。\n它換了模樣，成為夜裡認得你的星。'
       },
       {
         image: '4.png',
-        mission: '過場動畫 4 / 4',
+        mission: '中央大門過場',
         title: '新的卷軸',
         text: '小勇者：這次，換我們把故事寫下來。\n風翻開第一頁，名字還沒落筆，冒險已經開始。'
       }
@@ -598,7 +598,9 @@
 
     let placed = new Set();
     let dragging = null;
-    let endingIndex = 0;
+    let cutsceneIndex = 0;
+    let cutsceneMode = 'level';
+    let cutsceneLevel = null;
 
     function init() {
       if (!localStorage.getItem('adventure_start')) {
@@ -609,6 +611,7 @@
       }
       renderHotspots();
       updateHeldCount();
+      queuePendingLevelCutscene();
     }
 
     function hasCert(level) {
@@ -708,8 +711,8 @@
         const startButton = document.createElement('button');
         startButton.className = 'modal-btn';
         startButton.type = 'button';
-        startButton.textContent = '播放過場動畫';
-        startButton.addEventListener('click', startEnding);
+        startButton.textContent = '開啟中央大門';
+        startButton.addEventListener('click', startGateCutscene);
         bagRow.appendChild(startButton);
       }
     }
@@ -742,7 +745,7 @@
         cert.style.top = '';
         cert.classList.remove('dragging');
         placed.add(cert.dataset.type);
-        if (placed.size === 3) startEnding();
+        if (placed.size === 3) startGateCutscene();
       } else {
         slot.classList.remove('wrong');
         void slot.offsetWidth;
@@ -818,35 +821,63 @@
       cert.removeEventListener('pointercancel', cancelPointerDrag);
     }
 
-    function startEnding() {
-      endingIndex = 0;
-      doorGame.classList.add('hide');
-      completeScreen.classList.remove('show');
-      endingScreen.classList.add('show');
-      renderEndingScene();
+    function queuePendingLevelCutscene() {
+      const level = LEVELS.find(item => hasCert(item) && localStorage.getItem(item.cutsceneKey) !== '1');
+      if (level && sessionStorage.getItem('cover_seen') === '1') {
+        setTimeout(() => startLevelCutscene(level), 260);
+      }
     }
 
-    function renderEndingScene() {
-      const scene = ENDING_SCENES[endingIndex];
+    function startLevelCutscene(level) {
+      cutsceneMode = 'level';
+      cutsceneLevel = level;
+      cutsceneIndex = level.sceneIndex;
+      openCutscene();
+    }
+
+    function startGateCutscene() {
+      cutsceneMode = 'gate';
+      cutsceneLevel = null;
+      cutsceneIndex = 3;
+      openCutscene();
+    }
+
+    function openCutscene() {
+      doorGame.classList.add('hide');
+      completeScreen.classList.remove('show');
+      doorModal.classList.add('show');
+      endingScreen.classList.add('show');
+      renderCutscene();
+    }
+
+    function renderCutscene() {
+      const scene = CUTSCENES[cutsceneIndex];
       endingImage.src = scene.image;
-      endingImage.alt = `結局過場圖：${scene.title}`;
+      endingImage.alt = `過場動畫：${scene.title}`;
       endingKicker.textContent = scene.mission;
       endingTitle.textContent = scene.title;
       endingText.textContent = scene.text;
-      endingNext.textContent = endingIndex === ENDING_SCENES.length - 1 ? '點一下完成冒險' : '點一下繼續';
+      endingNext.textContent = cutsceneMode === 'gate' ? '點一下完成冒險' : '點一下回到大地圖';
       endingScreen.classList.remove('play');
       void endingScreen.offsetWidth;
       endingScreen.classList.add('play');
     }
 
-    function advanceEnding() {
+    function advanceCutscene() {
       if (!endingScreen.classList.contains('show')) return;
-      endingIndex += 1;
-      if (endingIndex >= ENDING_SCENES.length) {
+      if (cutsceneMode === 'gate') {
         showComplete();
         return;
       }
-      renderEndingScene();
+      if (cutsceneLevel) {
+        localStorage.setItem(cutsceneLevel.cutsceneKey, '1');
+      }
+      endingScreen.classList.remove('show');
+      endingScreen.classList.remove('hide');
+      doorModal.classList.remove('show');
+      cutsceneLevel = null;
+      renderHotspots();
+      updateHeldCount();
     }
 
     function showComplete() {
@@ -892,11 +923,11 @@
     document.getElementById('closeDoor').addEventListener('click', () => doorModal.classList.remove('show'));
     document.getElementById('clearProgress').addEventListener('click', clearProgress);
     document.getElementById('restartAdventure').addEventListener('click', clearProgress);
-    endingScreen.addEventListener('click', advanceEnding);
+    endingScreen.addEventListener('click', advanceCutscene);
     endingScreen.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        advanceEnding();
+        advanceCutscene();
       }
     });
     doorModal.addEventListener('click', event => {
