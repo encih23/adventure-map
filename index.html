@@ -274,59 +274,39 @@
     .bag-title { color: var(--gold); font-weight: 1000; margin-bottom: 10px; }
     .badge-row { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; align-items: center; }
 
-    .ending-preview {
+    .mission-brief {
       margin: 0 0 16px;
       border: 1px solid rgba(255,209,102,.24);
       border-radius: 16px;
       background: rgba(255,255,255,.045);
-      padding: 12px;
+      padding: 14px;
+      color: var(--muted);
+      font-weight: 850;
+      line-height: 1.7;
     }
 
-    .ending-preview-title {
-      color: var(--gold);
-      font-weight: 1000;
-      margin-bottom: 10px;
-    }
-
-    .ending-preview-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .ending-thumb {
-      position: relative;
-      min-height: 68px;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #05060b;
-      border: 1px solid rgba(255,255,255,.16);
-    }
-
-    .ending-thumb img {
-      width: 100%;
-      height: 100%;
-      min-height: 68px;
-      object-fit: cover;
+    .mission-brief strong {
       display: block;
-      filter: saturate(.88) brightness(.82);
+      color: var(--gold);
+      font-size: 1.05rem;
+      margin-bottom: 6px;
     }
 
-    .ending-thumb span {
-      position: absolute;
-      left: 6px;
-      right: 6px;
-      bottom: 6px;
+    .mission-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mission-step {
+      border: 1px solid rgba(255,255,255,.14);
       border-radius: 999px;
-      background: rgba(5, 7, 15, .72);
-      padding: 4px 6px;
+      padding: 7px 10px;
+      background: rgba(7,9,20,.38);
       color: #fff8dc;
-      font-size: .76rem;
-      font-weight: 1000;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: .9rem;
+      font-weight: 950;
     }
 
     .cert {
@@ -378,6 +358,16 @@
       object-fit: contain;
       display: block;
       background: #05060b;
+    }
+
+    .ending-screen.play img {
+      animation: cutsceneDrift 5.8s ease-out both;
+    }
+
+    @keyframes cutsceneDrift {
+      0% { opacity: 0; transform: scale(1.035); filter: brightness(.78) saturate(.9); }
+      14% { opacity: 1; }
+      100% { opacity: 1; transform: scale(1); filter: brightness(1) saturate(1); }
     }
 
     .ending-caption {
@@ -478,7 +468,6 @@
       .map-stage { padding: 76px 8px 8px; }
       .map-img { max-height: calc(100vh - 88px); }
       .door-panel { padding: 14px; }
-      .ending-preview-row { grid-template-columns: repeat(2, 1fr); }
       .ending-screen img { height: min(68vh, 520px); }
       .ending-caption { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
     }
@@ -512,13 +501,14 @@
           <h2 id="doorTitle">通關大門</h2>
           <button class="close-btn" id="closeDoor" type="button">關閉</button>
         </div>
-        <div class="ending-preview" aria-label="結局任務預覽">
-          <div class="ending-preview-title">結局任務：集滿三印，解鎖四張過場圖</div>
-          <div class="ending-preview-row">
-            <div class="ending-thumb"><img src="1.png" alt="三印歸位預覽" /><span>1 三印歸位</span></div>
-            <div class="ending-thumb"><img src="2.png" alt="門後之城預覽" /><span>2 門後之城</span></div>
-            <div class="ending-thumb"><img src="3.png" alt="歷史星河預覽" /><span>3 歷史星河</span></div>
-            <div class="ending-thumb"><img src="4.png" alt="新的卷軸預覽" /><span>4 新的卷軸</span></div>
+        <div class="mission-brief" aria-label="中央大門任務">
+          <strong>中央大門任務</strong>
+          完成三個區域，取得三枚印記，放入凹槽後啟動大門。大門開啟時會播放四幕過場動畫。
+          <div class="mission-steps" aria-label="任務步驟">
+            <span class="mission-step">1 朝代之印</span>
+            <span class="mission-step">2 成語之印</span>
+            <span class="mission-step">3 勇者之印</span>
+            <span class="mission-step">4 啟動過場動畫</span>
           </div>
         </div>
         <div class="slots" id="slots"></div>
@@ -531,7 +521,7 @@
       <div class="ending-screen" id="endingScreen" role="button" tabindex="0" aria-label="結局過場，點擊前進">
         <img id="endingImage" src="1.png" alt="結局過場圖" />
         <div class="ending-caption">
-          <div class="ending-kicker" id="endingKicker">結局任務 1 / 4</div>
+          <div class="ending-kicker" id="endingKicker">過場動畫 1 / 4</div>
           <div class="ending-title" id="endingTitle">三印歸位</div>
           <p class="ending-text" id="endingText"></p>
           <div class="ending-next" id="endingNext">點一下繼續</div>
@@ -563,25 +553,25 @@
     const ENDING_SCENES = [
       {
         image: '1.png',
-        mission: '結局任務 1 / 4',
+        mission: '過場動畫 1 / 4',
         title: '三印歸位',
         text: '三枚印記沒有喊出勝利，卻讓沉睡的門，想起了自己的名字。'
       },
       {
         image: '2.png',
-        mission: '結局任務 2 / 4',
+        mission: '過場動畫 2 / 4',
         title: '門後之城',
         text: '小勇者：原來門後面不是終點……\n小書童：是下一段故事在等我們。'
       },
       {
         image: '3.png',
-        mission: '結局任務 3 / 4',
+        mission: '過場動畫 3 / 4',
         title: '歷史星河',
         text: '走過的路沒有消失。\n它們換了模樣，成為夜裡認得你的星。'
       },
       {
         image: '4.png',
-        mission: '結局任務 4 / 4',
+        mission: '過場動畫 4 / 4',
         title: '新的卷軸',
         text: '小勇者：這次，換我們把故事寫下來。\n風翻開第一頁，名字還沒落筆，冒險已經開始。'
       }
@@ -718,7 +708,7 @@
         const startButton = document.createElement('button');
         startButton.className = 'modal-btn';
         startButton.type = 'button';
-        startButton.textContent = '開啟結局任務';
+        startButton.textContent = '播放過場動畫';
         startButton.addEventListener('click', startEnding);
         bagRow.appendChild(startButton);
       }
@@ -844,6 +834,9 @@
       endingTitle.textContent = scene.title;
       endingText.textContent = scene.text;
       endingNext.textContent = endingIndex === ENDING_SCENES.length - 1 ? '點一下完成冒險' : '點一下繼續';
+      endingScreen.classList.remove('play');
+      void endingScreen.offsetWidth;
+      endingScreen.classList.add('play');
     }
 
     function advanceEnding() {
