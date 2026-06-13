@@ -83,10 +83,11 @@
 
     .loading {
       min-height: 540px;
-      display: grid;
       place-items: center;
       text-align: center;
     }
+
+    .loading.show { display: grid; }
 
     .spinner {
       width: 72px;
@@ -222,7 +223,8 @@
     .bag-panel.show { display: block; }
     .bag-items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
-    .final, .gameover { min-height: 560px; display: grid; place-items: center; text-align: center; }
+    .final, .gameover { min-height: 560px; place-items: center; text-align: center; }
+    .final.show, .gameover.show { display: grid; }
     .final h2, .gameover h2 { font-size: clamp(2.1rem, 7vw, 4.4rem); margin-bottom: 12px; }
     .final h2 { color: var(--gold); }
     .gameover { background: radial-gradient(circle, rgba(251,75,95,.28), transparent 38%), #4a1118; }
@@ -270,7 +272,7 @@
       <div class="coin" id="coinBox">💰 <span id="coins">0</span></div>
     </div>
 
-    <section class="screen loading show" id="loadingScreen">
+    <section class="screen loading show" id="loading">
       <div>
         <div class="spinner"></div>
         <h2>讀取題庫中...</h2>
@@ -396,7 +398,7 @@
     };
 
     const $ = id => document.getElementById(id);
-    const screens = ['loadingScreen','battleScreen','shopScreen','finalScreen','gameOverScreen'].map($);
+    const screens = ['loading','battleScreen','shopScreen','finalScreen','gameOverScreen'].map($);
     const state = {
       questions: [],
       level: 0,
@@ -461,25 +463,36 @@
       return rows;
     }
 
+    async function fetchQuestionsOnce() {
+      const response = await fetch(CSV_URL, { cache: 'no-store' });
+      if (!response.ok) throw new Error('CSV response failed');
+      const text = await response.text();
+      const rows = parseCSV(text).slice(1);
+      const questions = rows.map(row => {
+        const [question, a, b, c, d] = row;
+        const choices = [a, b, c, d].filter(value => value && value !== '空');
+        return question && a ? { question, answer: a, choices } : null;
+      }).filter(Boolean);
+      if (questions.length < 3) throw new Error('not enough questions');
+      return questions;
+    }
+
     async function loadQuestions() {
-      try {
-        const response = await fetch(CSV_URL, { cache: 'no-store' });
-        if (!response.ok) throw new Error('CSV response failed');
-        const text = await response.text();
-        const rows = parseCSV(text).slice(1);
-        const questions = rows.map(row => {
-          const [question, a, b, c, d] = row;
-          const choices = [a, b, c, d].filter(value => value && value !== '空');
-          return question && a ? { question, answer: a, choices } : null;
-        }).filter(Boolean);
-        if (questions.length < 3) throw new Error('not enough questions');
-        $('loadText').textContent = `已載入 ${questions.length} 題，準備開始！`;
-        state.questions = questions;
-      } catch (error) {
-        $('loadText').textContent = 'CSV 抓不到，改用內建範例題庫。';
-        state.questions = FALLBACK;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          $('loadText').textContent = attempt === 1 ? '正在連線 Google Sheets CSV' : `重新讀取題庫中...第 ${attempt} 次`;
+          state.questions = await fetchQuestionsOnce();
+          $('loadText').textContent = `題庫載入完成，共 ${state.questions.length} 題`;
+          startGame();
+          return;
+        } catch (error) {
+          if (attempt < 3) await sleep(500);
+        }
       }
-      await sleep(650);
+
+      $('loadText').textContent = 'CSV 讀取失敗 3 次，改用內建範例題庫。';
+      state.questions = FALLBACK;
+      await sleep(1500);
       startGame();
     }
 

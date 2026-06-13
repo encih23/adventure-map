@@ -180,27 +180,6 @@
       box-shadow: none;
     }
 
-    .gate-title {
-      position: absolute;
-      z-index: 3;
-      display: grid;
-      place-items: center;
-      left: 50.8%;
-      top: 56.8%;
-      transform: translate(-50%, -50%);
-      color: #5a2a12;
-      font-weight: 1000;
-      font-size: clamp(1.55rem, 3.2vw, 3rem);
-      letter-spacing: .06em;
-      text-shadow:
-        0 2px 0 #fff1bc,
-        0 -1px 0 #fff1bc,
-        2px 0 0 #fff1bc,
-        -2px 0 0 #fff1bc,
-        0 5px 10px rgba(0,0,0,.18);
-      pointer-events: none;
-    }
-
     .badge-cover {
       position: absolute;
       z-index: 3;
@@ -519,7 +498,6 @@
       <div class="map-frame" id="mapFrame">
         <img class="map-img" id="mapImage" src="map-bg.png" alt="大冒險地圖" />
         <div class="fallback-note" id="fallbackNote">找不到 map-bg.png。請確認圖片放在「我的小遊戲」資料夾中。</div>
-        <div class="gate-title" aria-hidden="true">中央大門</div>
         <div class="hotspot-layer" id="hotspotLayer"></div>
       </div>
     </section>
