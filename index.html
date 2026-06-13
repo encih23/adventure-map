@@ -218,17 +218,17 @@
     .gate-stamp {
       position: absolute;
       z-index: 4;
-      width: clamp(34px, 4vw, 48px);
-      height: clamp(34px, 4vw, 48px);
+      width: clamp(38px, 4.4vw, 54px);
+      height: clamp(38px, 4.4vw, 54px);
       display: grid;
       place-items: center;
-      border: 3px solid rgba(74,222,128,.92);
+      border: 3px solid rgba(255,209,102,.94);
       border-radius: 50%;
-      background: rgba(9, 46, 24, .84);
-      color: #bbffd0;
-      font-size: clamp(.9rem, 1.8vw, 1.18rem);
+      background: rgba(88, 56, 8, .86);
+      color: #fff3bc;
+      font-size: clamp(1.25rem, 2.4vw, 1.7rem);
       font-weight: 1000;
-      box-shadow: 0 0 20px rgba(74,222,128,.52), inset 0 0 12px rgba(74,222,128,.18);
+      box-shadow: 0 0 22px rgba(255,209,102,.56), inset 0 0 12px rgba(255,209,102,.2);
       transform: translate(-50%, -50%) rotate(-10deg);
       pointer-events: none;
     }
@@ -549,10 +549,10 @@
     ];
 
     const LABEL_PATCHES = [
-      { text: '1', left: 21.3, top: 31.4, width: 8.2, height: 4.6, color: '#d92620' },
-      { text: '2', left: 80.7, top: 36.2, width: 7.1, height: 5.1, color: '#57b63b' },
-      { text: '3', left: 19.2, top: 86.4, width: 8.8, height: 5.1, color: '#9b42d0' },
-      { text: '4', left: 51.0, top: 66.7, width: 8.3, height: 5.1, color: '#1977d2' }
+      { left: 21.3, top: 31.4, width: 8.2, height: 4.6, color: '#d92620' },
+      { left: 80.7, top: 36.2, width: 7.1, height: 5.1, color: '#57b63b' },
+      { left: 19.2, top: 86.4, width: 8.8, height: 5.1, color: '#9b42d0' },
+      { left: 51.0, top: 66.7, width: 8.3, height: 5.1, color: '#1977d2' }
     ];
 
     const GATE_STAMPS = [
@@ -583,8 +583,8 @@
       {
         image: '4.png',
         mission: '中央大門過場',
-        title: '新的卷軸',
-        text: '小勇者：這次，換我們把故事寫下來。\n風翻開第一頁，名字還沒落筆，冒險已經開始。'
+        title: '冒險完成',
+        text: '恭喜完成冒險旅程'
       }
     ];
 
@@ -661,7 +661,7 @@
       LABEL_PATCHES.forEach(item => {
         const patch = document.createElement('div');
         patch.className = 'label-patch';
-        patch.textContent = item.text;
+        patch.setAttribute('aria-hidden', 'true');
         Object.assign(patch.style, {
           left: `${item.left}%`,
           top: `${item.top}%`,
@@ -679,7 +679,7 @@
         if (!position) return;
         const stamp = document.createElement('div');
         stamp.className = 'gate-stamp';
-        stamp.textContent = '印';
+        stamp.textContent = '🔑';
         stamp.setAttribute('aria-label', `${level.cert} 已取得`);
         stamp.style.left = `${position.left}%`;
         stamp.style.top = `${position.top}%`;
