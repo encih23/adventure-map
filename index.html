@@ -274,6 +274,61 @@
     .bag-title { color: var(--gold); font-weight: 1000; margin-bottom: 10px; }
     .badge-row { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; align-items: center; }
 
+    .ending-preview {
+      margin: 0 0 16px;
+      border: 1px solid rgba(255,209,102,.24);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      padding: 12px;
+    }
+
+    .ending-preview-title {
+      color: var(--gold);
+      font-weight: 1000;
+      margin-bottom: 10px;
+    }
+
+    .ending-preview-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .ending-thumb {
+      position: relative;
+      min-height: 68px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #05060b;
+      border: 1px solid rgba(255,255,255,.16);
+    }
+
+    .ending-thumb img {
+      width: 100%;
+      height: 100%;
+      min-height: 68px;
+      object-fit: cover;
+      display: block;
+      filter: saturate(.88) brightness(.82);
+    }
+
+    .ending-thumb span {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 6px;
+      border-radius: 999px;
+      background: rgba(5, 7, 15, .72);
+      padding: 4px 6px;
+      color: #fff8dc;
+      font-size: .76rem;
+      font-weight: 1000;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .cert {
       border: 1px solid rgba(255,209,102,.45);
       border-radius: 999px;
@@ -338,6 +393,20 @@
       backdrop-filter: blur(10px);
     }
 
+    .ending-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255,209,102,.34);
+      border-radius: 999px;
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      background: rgba(255,209,102,.13);
+      color: var(--gold);
+      font-size: .86rem;
+      font-weight: 1000;
+    }
+
     .ending-title {
       color: var(--gold);
       font-weight: 1000;
@@ -365,7 +434,15 @@
     .complete-screen {
       display: none;
       text-align: center;
-      padding: 30px 10px;
+      position: relative;
+      min-height: min(72vh, 620px);
+      padding: 34px 16px;
+      align-content: center;
+      border-radius: 18px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(5,7,15,.28), rgba(5,7,15,.72)),
+        url("4.png") center / cover no-repeat;
     }
     .complete-screen.show { display: block; }
     .door-game.hide { display: none; }
@@ -401,6 +478,7 @@
       .map-stage { padding: 76px 8px 8px; }
       .map-img { max-height: calc(100vh - 88px); }
       .door-panel { padding: 14px; }
+      .ending-preview-row { grid-template-columns: repeat(2, 1fr); }
       .ending-screen img { height: min(68vh, 520px); }
       .ending-caption { left: 10px; right: 10px; bottom: 10px; padding: 12px; }
     }
@@ -434,6 +512,15 @@
           <h2 id="doorTitle">通關大門</h2>
           <button class="close-btn" id="closeDoor" type="button">關閉</button>
         </div>
+        <div class="ending-preview" aria-label="結局任務預覽">
+          <div class="ending-preview-title">結局任務：集滿三印，解鎖四張過場圖</div>
+          <div class="ending-preview-row">
+            <div class="ending-thumb"><img src="1.png" alt="三印歸位預覽" /><span>1 三印歸位</span></div>
+            <div class="ending-thumb"><img src="2.png" alt="門後之城預覽" /><span>2 門後之城</span></div>
+            <div class="ending-thumb"><img src="3.png" alt="歷史星河預覽" /><span>3 歷史星河</span></div>
+            <div class="ending-thumb"><img src="4.png" alt="新的卷軸預覽" /><span>4 新的卷軸</span></div>
+          </div>
+        </div>
         <div class="slots" id="slots"></div>
         <div class="bag">
           <div class="bag-title">背包欄：拖曳憑證到對應凹槽</div>
@@ -444,6 +531,7 @@
       <div class="ending-screen" id="endingScreen" role="button" tabindex="0" aria-label="結局過場，點擊前進">
         <img id="endingImage" src="1.png" alt="結局過場圖" />
         <div class="ending-caption">
+          <div class="ending-kicker" id="endingKicker">結局任務 1 / 4</div>
           <div class="ending-title" id="endingTitle">三印歸位</div>
           <p class="ending-text" id="endingText"></p>
           <div class="ending-next" id="endingNext">點一下繼續</div>
@@ -475,21 +563,25 @@
     const ENDING_SCENES = [
       {
         image: '1.png',
+        mission: '結局任務 1 / 4',
         title: '三印歸位',
         text: '三枚印記沒有喊出勝利，卻讓沉睡的門，想起了自己的名字。'
       },
       {
         image: '2.png',
+        mission: '結局任務 2 / 4',
         title: '門後之城',
         text: '小勇者：原來門後面不是終點……\n小書童：是下一段故事在等我們。'
       },
       {
         image: '3.png',
+        mission: '結局任務 3 / 4',
         title: '歷史星河',
         text: '走過的路沒有消失。\n它們換了模樣，成為夜裡認得你的星。'
       },
       {
         image: '4.png',
+        mission: '結局任務 4 / 4',
         title: '新的卷軸',
         text: '小勇者：這次，換我們把故事寫下來。\n風翻開第一頁，名字還沒落筆，冒險已經開始。'
       }
@@ -502,6 +594,7 @@
     const doorGame = document.getElementById('doorGame');
     const endingScreen = document.getElementById('endingScreen');
     const endingImage = document.getElementById('endingImage');
+    const endingKicker = document.getElementById('endingKicker');
     const endingTitle = document.getElementById('endingTitle');
     const endingText = document.getElementById('endingText');
     const endingNext = document.getElementById('endingNext');
@@ -739,6 +832,7 @@
       const scene = ENDING_SCENES[endingIndex];
       endingImage.src = scene.image;
       endingImage.alt = `結局過場圖：${scene.title}`;
+      endingKicker.textContent = scene.mission;
       endingTitle.textContent = scene.title;
       endingText.textContent = scene.text;
       endingNext.textContent = endingIndex === ENDING_SCENES.length - 1 ? '點一下完成冒險' : '點一下繼續';
